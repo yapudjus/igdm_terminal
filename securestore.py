@@ -17,7 +17,7 @@ UPDATE: it's said "tomorrow", blowfish is done, thx earlier me for leaving a TO 
 """
 
 
-def openEncryptedData(console: Console) -> tuple:
+def openEncryptedData(console: Console, interactive: bool = True, passwd: str = None) -> tuple:
     """
     function to return the actual stored data, automatically prompt for required information from user
     data about the status is stored inside a json file of this structure at path `cache/securestore.json`
@@ -45,9 +45,10 @@ def openEncryptedData(console: Console) -> tuple:
             from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
             match level:
                 case "ECB-CTS":
-                    console.print(f"[bold #1279e0] encryption {style}-{level} détéctée")
-                    passwd = Prompt.ask("veuillez entrer le mots de passe [bold red]Blowfish[/]"
-                                        '(La saisie ne sera pas affiché)', password=True)
+                    if interactive: 
+                        console.print(f"[bold #1279e0] encryption {style}-{level} détéctée")
+                        passwd = Prompt.ask("veuillez entrer le mots de passe [bold red]Blowfish[/]"
+                                            '(La saisie ne sera pas affiché)', password=True)
                     # deriving key from password
                     with open(os.path.join('cache', 'salt.bin'), 'rb') as file:
                         SALT = file.read()
@@ -71,7 +72,7 @@ def openEncryptedData(console: Console) -> tuple:
 
 
 
-def setEncryptedData(console: Console, session_id:str, csrf_token: str) -> None:
+def setEncryptedData(console: Console, session_id:str, csrf_token: str, style: str = None, password: str = None) -> None:
     """
     function to prompt for encryption to use for storage of both session_id and csrf_token
     available now:
@@ -79,18 +80,22 @@ def setEncryptedData(console: Console, session_id:str, csrf_token: str) -> None:
     blowfish:ECB-CTS -> storage of data inside a json encoded as bytes, encrypted using blowfish
     keyring:None -> uses the system's keyring
     """
-    console.clear()
+    interactive = bool(style == None)
+    if interactive: console.clear()
     available_dict = dict(Clear="stored in plain text", 
                                 Blowfish="encrypted with blowfish",
                                 #AES="store in an aes encrypted file",
                                 keyring="stored inside the system keyring"
                                 )
-    genstr = ""
-    for i in range(len(available_dict)) :
-        genstr += f'\n\t[bold red]{i+1}.[/] [yellow italic]{list(available_dict.keys())[i]}[/]: {available_dict[list(available_dict.keys())[i]]}'
-    console.print(f"here you will be asked how you want to store your auth data{genstr}")
-    ans = int(Prompt.ask("->", default=list(available_dict).index('Blowfish')+1))
-    match list(available_dict.keys())[ans-1]:
+    if interactive : # running from default
+        genstr = ""
+        for i in range(len(available_dict)) :
+            genstr += f'\n\t[bold red]{i+1}.[/] [yellow italic]{list(available_dict.keys())[i]}[/]: {available_dict[list(available_dict.keys())[i]]}'
+        console.print(f"here you will be asked how you want to store your auth data{genstr}")
+        ans = int(Prompt.ask("->", default=list(available_dict).index('Blowfish')+1))
+        sel = list(available_dict.keys())[ans-1]
+    else: sel=style # this is running from the TUI
+    match sel:
         case "Clear": 
             # plain text storage
             with open(os.path.join('cache', 'securestore.json'), 'w') as file:
@@ -103,8 +108,8 @@ def setEncryptedData(console: Console, session_id:str, csrf_token: str) -> None:
             import blowfish # from [here](https://github.com/jashandeep-sohi/python-blowfish)
             from cryptography.hazmat.primitives import hashes
             from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-            console.print(f"[bold #1279e0] l'encryption Blowfish ECB-CTS dérive une clé de 56bit à partir d'un mots de passe")
-            p_ok = False
+            if interactive: console.print(f"[bold #1279e0] l'encryption Blowfish ECB-CTS dérive une clé de 56bit à partir d'un mots de passe")
+            p_ok = not(interactive)
             while p_ok == False:
                 passwd = Prompt.ask("veuillez entrer le mots de passe [bold red]Blowfish[/]"
                                     '(La saisie ne sera pas affiché)', password=True)
@@ -112,6 +117,7 @@ def setEncryptedData(console: Console, session_id:str, csrf_token: str) -> None:
                                     '(La saisie ne sera pas affiché)', password=True)
                 if passwd != passwd2: console.print("[bold red] le mots de passe n'est pas identique, veuillez réessayer")
                 else: p_ok = True
+            password = passwd
             SALT = os.urandom(16)
             # deriving key from password
             kdf = PBKDF2HMAC(
@@ -133,7 +139,7 @@ def setEncryptedData(console: Console, session_id:str, csrf_token: str) -> None:
             return
         case "keyring":
             # keyring storage
-            console.print("[blue] using the system keyring, you might e prompted to open/create/authorize")
+            if interactive: console.print("[blue] using the system keyring, you might e prompted to open/create/authorize")
             import keyring as kr
             path = "igdm_terminal_securestore"
             kr.set_password(path, "session_id", session_id)
