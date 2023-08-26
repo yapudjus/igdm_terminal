@@ -1,0 +1,110 @@
+$base03: #002b36 ;
+$base02: #073642 ;
+$base01: #586e75 ;
+$base00: #657b83 ;
+$base0: #839496 ;
+$base1: #93a1a1 ;
+$base2: #eee8d5 ;
+$base3: #fdf6e3 ;
+
+$yellow: #b58900;
+$orange: #cb4b16;
+$red: #dc322f;
+$magenta:#d33682;
+$violet: #6c71c4;
+$blue: #268bd2;
+$cyan: #2aa198;
+$green: #859900;
+
+/* all the sidebar and thread selection */
+
+#sidebar{
+    dock: left;
+    width: 20%;
+    height: 100%;
+}
+
+.threadbox { /* main thread part */
+    height: 3;
+}
+
+.threadbox .name-div { /* online status and name div*/
+    height: 1;
+    dock: top;
+    text-style: bold;
+    color: $base02;
+}
+
+.threadbox .hovered {
+    background: $base00;
+}
+
+.threadbox .selected {
+    background: $base00;
+}
+
+.threadbox .name-div .onlinestatus {
+    margin: 0 1 0 0;
+    dock: left;
+    width: 1;
+    height: 1;
+}
+
+/* onlinestatus colors */
+
+.name-div .online {
+    background: $green;
+}
+
+.name-div .away {
+    background: $orange;
+}
+
+.name-div .dnd {
+    background: $magenta; 
+}
+
+.name-div .offline {
+    background: $base1;
+}
+
+.threadbox .lastmsg {
+    margin: 0 1 0 0;
+    dock: bottom;
+    align: right bottom;
+    height: 2;
+    text-style: italic;
+}
+
+/* main message page */
+
+#msgthread {
+    height: 100%;
+    background: $base03;
+}
+
+#msgdiv {
+    min-height: 3;
+    dock: bottom;
+    background: $base03;
+    
+}
+
+#sendbtn{
+    /* border: round $violet; */
+    dock: right;
+    width: 4;
+    height: 3;
+    background: $base02;
+    color: $violet;
+}
+
+#sendbtn:focus{
+    /* border: round $magenta !important; */
+    color: $magenta !important;
+}
+
+#msginput{
+    min-height: 1;
+}
+
