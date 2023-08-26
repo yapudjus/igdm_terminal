@@ -79,20 +79,28 @@ $green: #859900;
 /* main message page */
 
 #msgthread {
-    height: 100%;
-    background: $base03;
+    height: 75%;
+}
+
+#messages {
+    height: 75%;
+    background: $base02;
 }
 
 #msgdiv {
     min-height: 3;
     dock: bottom;
     background: $base03;
+    align: right bottom;
+}
+
+#msginput{
+    min-height: 1;
     
 }
 
 #sendbtn{
     /* border: round $violet; */
-    dock: right;
     width: 4;
     height: 3;
     background: $base02;
@@ -103,8 +111,3 @@ $green: #859900;
     /* border: round $magenta !important; */
     color: $magenta !important;
 }
-
-#msginput{
-    min-height: 1;
-}
-

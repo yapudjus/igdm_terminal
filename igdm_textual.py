@@ -34,7 +34,8 @@ class interface(App):
                     log(self.threads[0])
             with Container(id='msgthread') : # active message tab
                 with ScrollableContainer(id="messages"): # message list
-                    yield Placeholder()
+                    for i in range(50):
+                        yield Label(classes='message', renderable=str(i))
                 with Container(id='msgdiv') : # message box and send button
                     yield Input(id='msginput')
                     yield Button('SEND', id='sendbtn')
