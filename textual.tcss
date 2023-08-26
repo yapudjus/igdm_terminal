@@ -26,6 +26,7 @@ $green: #859900;
 
 .threadbox { /* main thread part */
     height: 3;
+    margin: 0 0 1 0;
 }
 
 .threadbox .name-div { /* online status and name div*/
@@ -44,7 +45,7 @@ $green: #859900;
 }
 
 .threadbox .name-div .onlinestatus {
-    margin: 0 1 0 0;
+    margin: 0 1 0 1;
     dock: left;
     width: 1;
     height: 1;
@@ -69,7 +70,7 @@ $green: #859900;
 }
 
 .threadbox .lastmsg {
-    margin: 0 1 0 0;
+    margin: 0 0 0 1;
     dock: bottom;
     align: right bottom;
     height: 2;
@@ -79,35 +80,70 @@ $green: #859900;
 /* main message page */
 
 #msgthread {
-    height: 75%;
+    margin: 0 0 0 1;
+    height: 100%;
 }
 
 #messages {
-    height: 75%;
-    background: $base02;
+    max-height: 100%;
+    background: $base01;
+    align: left bottom;
 }
 
-#msgdiv {
-    min-height: 3;
-    dock: bottom;
+.message {
+    min-height: 2;
+    margin: 0 0 1 0;
+    box-sizing: content-box;
     background: $base03;
-    align: right bottom;
+}
+
+.message .horizontal-1 {
+    height: 1;
+    layout: horizontal;
+}
+
+.message .horizontal-1 * {
+    margin: 0 1 0 0;
+    height: 1;
+}
+
+.message.horizontal-2 {
+    min-height: 1;
+    layout: horizontal;
+    box-sizing: content-box;
+}
+
+.message .horizontal-2 .separator1 {
+    margin: 0 1 0 0 ;
+    height: 1;
+}
+
+.message .horizontal-2 .message-content {
+    min-height: 1;
+    box-sizing: content-box;
 }
 
 #msginput{
+    /* dock:bottom; */
+    background: $base02;
+    border:none;
     min-height: 1;
-    
+    align: center bottom;
 }
 
-#sendbtn{
-    /* border: round $violet; */
-    width: 4;
-    height: 3;
+/* #sendbtn{
+    border: none;
+    width: 2;
+    min-width: 1;
+    height: 1;
     background: $base02;
     color: $violet;
+    align: right bottom;
+    text-style: bold;
 }
 
 #sendbtn:focus{
-    /* border: round $magenta !important; */
     color: $magenta !important;
-}
+    background: $violet !important;
+    color: $magenta !important; 
+} */

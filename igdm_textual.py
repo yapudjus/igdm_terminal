@@ -1,28 +1,34 @@
-import random
+import random, json
 from textual import events, on, log
 from textual.app import App, ComposeResult
-from textual.containers import Container, VerticalScroll, ScrollableContainer, Horizontal
-from textual.widgets import Button, Input, Footer, Placeholder, Markdown, RadioButton, Label, ListItem, ListView, Pretty
+from textual.containers import Container, VerticalScroll, ScrollableContainer, Horizontal, Vertical
+from textual.widgets import Button, Input, Footer, Placeholder, Markdown, RadioButton, Label, ListItem, ListView, Pretty, Static
 from textual.reactive import var
 
 class interface(App):
     CSS_PATH = "textual.tcss"
+    BINDINGS = [
+        ('/', 'jump_msg', 'jump to send'),
+        ('home', 'jump_threadlist', 'to thread list')
+    ]
     def compose(self) -> ComposeResult:
+        lorem = 'Quod consequatur iste tempore et. Necessitatibus sunt occaecati officia sint. Eaque neque fugiat repellat. Ea incidunt et error animi a aliquid.Aliquid reprehenderit velit non ad non non rerum aperiam. Accusamus et culpa tenetur minima quas quis. Quod eveniet iusto quis saepe. Dolores minus natus sit quia modi suscipit iure similique. Voluptatem rerum sint ut optio nulla sequi illo.Perspiciatis nihil aut temporibus exercitationem minus quae excepturi. Ut nisi harum sunt hic. Et fugiat nostrum quo mollitia facilis alias dolores. Quis voluptate dolore distinctio autem temporibus.Assumenda nam quidem incidunt consequuntur a earum. Qui provident alias enim perspiciatis aperiam'.split(' ')
+        with open('_usernames.json', 'r') as file: usernames = json.load(file)
         with Container(id='all') :
             # with VerticalScroll(id='sidebar') :# docked left bar
             self._Sidebar = ListView(id='sidebar')
             status_list = ['online', 'dnd', 'offline', 'away']
             self.threads = []
             with self._Sidebar:
-                for i in range(10):
+                for i in range(25):
                     self.threads.append(self.Threadentry(
                         id=f'thread-{i}',
                         threadid=f'threadinstaid-{i}', 
                         selected=False, 
                         hovered=False, 
-                        username='username here', 
+                        username=random.choice(usernames), 
                         status=random.choice(status_list), 
-                        lastmsg='last message here'
+                        lastmsg=str(' '.join(random.choices(lorem, k=random.randint(1, len(lorem)))))
                     ))
                     for items in self.threads[-1].compose(): yield items
                     # with ListItem(classes='threadbox', id=f'thread-{i}'):
@@ -32,15 +38,46 @@ class interface(App):
                     #         yield Label(classes=f'name {status}', id=f'thread-{i}-name', renderable='user name here')
                     #     yield Label(classes='lastmsg', id=f'thread-{i}-last', renderable='last message here')
                     log(self.threads[0])
-            with Container(id='msgthread') : # active message tab
-                with ScrollableContainer(id="messages"): # message list
+            with Vertical(id='msgthread') : # active message tab
+                with ListView(id="messages", initial_index=-1): # message list
                     for i in range(50):
-                        yield Label(classes='message', renderable=str(i))
-                with Container(id='msgdiv') : # message box and send button
-                    yield Input(id='msginput')
-                    yield Button('SEND', id='sendbtn')
+                        with ListItem(classes='message', id=f'msg-{i}', disabled=False):
+                            with Horizontal(classes='horizontal-1'):
+                                yield Label(
+                                    id=f'message-{i}-username', 
+                                    classes='username',
+                                    renderable=random.choice(usernames)
+                                    )
+                                yield Label(
+                                    classes='separator1',
+                                    renderable='@'
+                                    )
+                                yield Label(
+                                    id=f'message-{i}-time', 
+                                    classes='time',
+                                    renderable=f'{str(random.randint(0,24)).zfill(2)}:{str(random.randint(0,59)).zfill(2)}:{str(random.randint(0,59)).zfill(2)}'
+                                    )
+                            with Horizontal(classes='horizontal-2'):
+                                yield Label(
+                                    classes='separator1',
+                                    renderable='➟'
+                                )
+                                yield Label(
+                                    classes='message-content',
+                                    id=f'message-{i}-content', 
+                                    renderable=str(' '.join(random.choices(lorem, k=random.randint(1, len(lorem)))))
+                                )
+                yield Input(id='msginput', placeholder='➔ message to send')
+                
         yield Footer()
 
+    def action_jump_msg(self) -> None:
+        """jump to msg input"""
+        self.query_one(selector='#msginput').focus()
+    
+    def action_jump_threadlist(self) -> None:
+        """jump to threadlist"""
+        self.query_one(selector='#sidebar').focus()
     class Threadentry() :
         def __init__(self, threadid:str, selected:bool, hovered:bool, username:str, status:str, lastmsg:str, id:str):
             self.id=id
