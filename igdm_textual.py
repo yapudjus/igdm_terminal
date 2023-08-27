@@ -1,4 +1,4 @@
-import random, json
+import random, json, datetime
 from textual import events, on, log
 from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll, ScrollableContainer, Horizontal, Vertical
@@ -30,43 +30,22 @@ class interface(App):
                         status=random.choice(status_list), 
                         lastmsg=str(' '.join(random.choices(lorem, k=random.randint(1, len(lorem)))))
                     ))
-                    for items in self.threads[-1].compose(): yield items
-                    # with ListItem(classes='threadbox', id=f'thread-{i}'):
-                    #     with Horizontal(classes='name-div', id=f'thread-{i}-name-div'):
-                    #         status = random.choice(status_list)
-                    #         yield Label(classes=f'onlinestatus {status}', id=f'thread-{i}-online-status', renderable='▶')
-                    #         yield Label(classes=f'name {status}', id=f'thread-{i}-name', renderable='user name here')
-                    #     yield Label(classes='lastmsg', id=f'thread-{i}-last', renderable='last message here')
-                    log(self.threads[0])
+                for thread in self.threads:
+                    for items in thread.compose(): yield items
+
             with Vertical(id='msgthread') : # active message tab
-                with ListView(id="messages", initial_index=-1): # message list
-                    for i in range(50):
-                        with ListItem(classes='message', id=f'msg-{i}', disabled=False):
-                            with Horizontal(classes='horizontal-1'):
-                                yield Label(
-                                    id=f'message-{i}-username', 
-                                    classes='username',
-                                    renderable=random.choice(usernames)
-                                    )
-                                yield Label(
-                                    classes='separator1',
-                                    renderable='@'
-                                    )
-                                yield Label(
-                                    id=f'message-{i}-time', 
-                                    classes='time',
-                                    renderable=f'{str(random.randint(0,24)).zfill(2)}:{str(random.randint(0,59)).zfill(2)}:{str(random.randint(0,59)).zfill(2)}'
-                                    )
-                            with Horizontal(classes='horizontal-2'):
-                                yield Label(
-                                    classes='separator1',
-                                    renderable='➟'
-                                )
-                                yield Label(
-                                    classes='message-content',
-                                    id=f'message-{i}-content', 
-                                    renderable=str(' '.join(random.choices(lorem, k=random.randint(1, len(lorem)))))
-                                )
+                self._messagebox = ListView(id="messages", disabled=False)
+                with self._messagebox: # message list
+                    self.msglist = []
+                    for i in range(25):
+                        self.msglist.append(self.MessageEntry(
+                            msgid=str(i),
+                            username=random.choice(usernames),
+                            msgcontent=str(' '.join(random.choices(lorem, k=random.randint(1, len(lorem))))),
+                            msgtime=f'{str(random.randint(0,24)).zfill(2)}:{str(random.randint(0,59)).zfill(2)}:{str(random.randint(0,59)).zfill(2)}'
+                        ))
+                    for message in self.msglist:
+                        for item in message.compose() : yield item
                 yield Input(id='msginput', placeholder='➔ message to send')
                 
         yield Footer()
@@ -78,6 +57,61 @@ class interface(App):
     def action_jump_threadlist(self) -> None:
         """jump to threadlist"""
         self.query_one(selector='#sidebar').focus()
+    
+    @on(Input.Submitted, '#msginput')
+    def InputSubmitHandler(self) -> None:
+        self.sendMSG(value=self.query_one(selector='#msginput').value)
+        self.query_one(selector='#msginput').value = ''
+    
+    def sendMSG(self, value) -> None:
+        self.msglist.append(self.MessageEntry(
+            msgcontent=value,
+            msgid=str(len(self.msglist)),
+            username='you',
+            msgtime=self.rendertime
+        ))
+    
+    def appendMSG(self, id) -> None:
+        self._messagebox.mount(self.msglist[i].compose)
+    
+    def rendertime() -> str:
+        return str(datetime.datetime.now().strftime('%H:%M:%S'))
+
+    class MessageEntry() :
+        def __init__(self, msgid:str, username:str, msgtime:str, msgcontent:str):
+            self.msgid = msgid
+            self.msgtime = msgtime
+            self.msgvalue = msgcontent
+            self.username = username
+        
+        def compose(self) -> ComposeResult :
+            with ListItem(classes='message', id=f'msg-{self.msgid}', disabled=False):
+                with Horizontal(classes='horizontal-1'):
+                    yield Label(
+                        id=f'message-{self.msgid}-username', 
+                        classes='username',
+                        renderable=self.username
+                        )
+                    yield Label(
+                        classes='separator1',
+                        renderable='@'
+                        )
+                    yield Label(
+                        id=f'message-{self.msgid}-time', 
+                        classes='time',
+                        renderable=self.msgtime
+                        )
+                with Horizontal(classes='horizontal-2'):
+                    yield Label(
+                        classes='separator1',
+                        renderable='➟'
+                    )
+                    yield Label(
+                        classes='message-content',
+                        id=f'message-{self.msgid}-content', 
+                        renderable=self.msgvalue,
+                        shrink=True
+                    )
     class Threadentry() :
         def __init__(self, threadid:str, selected:bool, hovered:bool, username:str, status:str, lastmsg:str, id:str):
             self.id=id
