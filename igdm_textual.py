@@ -1,6 +1,6 @@
 import random, json, datetime
 from textual import events, on, log
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, Widget
 from textual.containers import Container, VerticalScroll, ScrollableContainer, Horizontal, Vertical
 from textual.widgets import Button, Input, Footer, Placeholder, Markdown, RadioButton, Label, ListItem, ListView, Pretty, Static
 from textual.reactive import var
@@ -37,7 +37,7 @@ class interface(App):
                 self._messagebox = ListView(id="messages", disabled=False)
                 with self._messagebox: # message list
                     self.msglist = []
-                    for i in range(25):
+                    for i in range(4):
                         self.msglist.append(self.MessageEntry(
                             msgid=str(i),
                             username=random.choice(usernames),
@@ -61,6 +61,7 @@ class interface(App):
     @on(Input.Submitted, '#msginput')
     def InputSubmitHandler(self) -> None:
         self.sendMSG(value=self.query_one(selector='#msginput').value)
+        self.appendMSG(len(self.msglist)-1)
         self.query_one(selector='#msginput').value = ''
     
     def sendMSG(self, value) -> None:
@@ -68,13 +69,15 @@ class interface(App):
             msgcontent=value,
             msgid=str(len(self.msglist)),
             username='you',
-            msgtime=self.rendertime
+            msgtime=self.rendertime()
         ))
     
     def appendMSG(self, id) -> None:
-        self._messagebox.mount(self.msglist[i].compose)
-    
-    def rendertime() -> str:
+        # for item in self.msglist[id].compose(): self.mount(item, after=f'#msg-{int(id)-1}')
+        with self._messagebox :
+            self._messagebox.mount_all(self.msglist[id].testcomp())
+        
+    def rendertime(self) -> str:
         return str(datetime.datetime.now().strftime('%H:%M:%S'))
 
     class MessageEntry() :
@@ -84,6 +87,37 @@ class interface(App):
             self.msgvalue = msgcontent
             self.username = username
         
+        def testcomp(self) -> Widget:
+            res = []
+            with ListItem(classes='message', id=f'msg-{self.msgid}', disabled=False):
+                with Horizontal(classes='horizontal-1'):
+                    res.append(Label(
+                        id=f'message-{self.msgid}-username', 
+                        classes='username',
+                        renderable=self.username
+                        ))
+                    res.append(Label(
+                        classes='separator1',
+                        renderable='@'
+                        ))
+                    res.append(Label(
+                        id=f'message-{self.msgid}-time', 
+                        classes='time',
+                        renderable=self.msgtime
+                        ))
+                with Horizontal(classes='horizontal-2'):
+                    res.append(Label(
+                        classes='separator1',
+                        renderable='➟'
+                    ))
+                    res.append(Label(
+                        classes='message-content',
+                        id=f'message-{self.msgid}-content', 
+                        renderable=self.msgvalue,
+                        shrink=True
+                    ))
+            return res
+
         def compose(self) -> ComposeResult :
             with ListItem(classes='message', id=f'msg-{self.msgid}', disabled=False):
                 with Horizontal(classes='horizontal-1'):
