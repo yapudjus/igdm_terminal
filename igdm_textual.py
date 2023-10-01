@@ -69,18 +69,15 @@ class interface(App):
         self.query_one(selector='#sidebar').focus()
     
     @on(Input.Submitted, '#msginput')
-    def InputSubmitHandler(self) -> None:
-        qres = self.query_one("#messages")
-        # self.log(qres)
-        # self.log(f'{self.ancestors_with_self(self=qres)}')
+    async def InputSubmitHandler(self) -> None:
         msginput = self.query_one(selector='#msginput')
+        await self.sendMSG(value=msginput.value)
         msginput.value = 'SENDING...'
-        self.sendMSG(value=msginput.value)
         self._messages__ancestorlist:list = self.query_one('#messages').ancestors_with_self
-        self.appendMSG(len(self.msglist)-1)
+        await self.appendMSG(len(self.msglist)-1)
         msginput.value = ''
     
-    def sendMSG(self, value) -> None:
+    async def sendMSG(self, value) -> None:
         self.msglist.append(self.MessageEntry(
             msgcontent=value,
             msgid=str(len(self.msglist)),
@@ -88,14 +85,14 @@ class interface(App):
             msgtime=self.rendertime()
         ))
     
-    def appendMSG(self, id) -> None:
+    async def appendMSG(self, id) -> None:
         # for item in self.msglist[id].compose(): self.mount(item, after=f'#msg-{int(id)-1}'
         # with self.query_one('#messages'): 
         # self.mount_all([Placeholder('tes')], before='#messages')
         with ExitStack() as stack :
             
-            for i in reversed(self._messages__ancestorlist[:-2]) : stack.enter_context(i)
-            self.mount_all(self.msglist[id].testcomp(), before='#messages')
+            # for i in reversed(self._messages__ancestorlist[:-2]) : stack.enter_context(i)
+            await self.msglist[id].testcomp(self)
         
     def rendertime(self) -> str:
         return str(datetime.datetime.now().strftime('%H:%M:%S'))
@@ -107,65 +104,60 @@ class interface(App):
             self.msgvalue = msgcontent
             self.username = username
         
-        def testcomp(self) -> ComposeResult:
-            res = []
-            with Horizontal(classes='message', id=f'msg-{self.msgid}', disabled=False):
-                with Horizontal(classes='horizontal-1'):
-                    res.append(Label(
-                        id=f'message-{self.msgid}-username', 
-                        classes='username',
-                        renderable=self.username
-                        ))
-                    res.append(Label(
-                        classes='separator1',
-                        renderable='@'
-                        ))
-                    res.append(Label(
-                        id=f'message-{self.msgid}-time', 
-                        classes='time',
-                        renderable=self.msgtime
-                        ))
-                with Horizontal(classes='horizontal-2'):
-                    res.append(Label(
-                        classes='separator1',
-                        renderable='➟'
-                    ))
-                    res.append(Label(
-                        classes='message-content',
-                        id=f'message-{self.msgid}-content', 
-                        renderable=self.msgvalue,
-                        shrink=True
-                    ))
-            return res
+        async def testcomp(self, parentself) -> ComposeResult:
+            await parentself.mount(
+                ListItem( # classes='message', id=f'msg-{self.msgid}'
+                    Horizontal( # classes='horizontal-1', id=f'msg-{self.msgid}-horz1'
+                        Label(id=f'message-{self.msgid}-username', classes='username',renderable=self.username), 
+                        Label(classes='separator1',renderable='@'),
+                        Label(id=f'message-{self.msgid}-time', classes='time',renderable=self.msgtime),
+                    classes='horizontal-1', id=f'msg-{self.msgid}-horz1'),
+                    Horizontal( # classes='horizontal-2', id=f'msg-{self.msgid}-horz2'
+                        Label(classes='separator1',renderable='➟'),
+                        Label(classes='message-content',id=f'message-{self.msgid}-content', renderable=self.msgvalue,shrink=True),
+                    classes='horizontal-2', id=f'msg-{self.msgid}-horz2'),
+                classes='message', id=f'msg-{self.msgid}', disabled=False), 
+            after=f'#msg-{int(self.msgid)-1}')
 
-        def compose(self) :
-            with ListItem(classes='message', id=f'msg-{self.msgid}', disabled=False):
-                with Horizontal(classes='horizontal-1'):
-                    yield Label(
-                        id=f'message-{self.msgid}-username', 
-                        classes='username',
-                        renderable=self.username
-                        )
-                    yield Label(
-                        classes='separator1',
-                        renderable='@'
-                        )
-                    yield Label(
-                        id=f'message-{self.msgid}-time', 
-                        classes='time',
-                        renderable=self.msgtime
-                        )
-                with Horizontal(classes='horizontal-2'):
-                    yield Label(
-                        classes='separator1',
-                        renderable='➟'
-                    )
-                    yield Label(
-                        classes='message-content',
-                        id=f'message-{self.msgid}-content', 
-                        renderable=self.msgvalue,
-                        shrink=True
-                    )
+        def compose(self) -> ComposeResult:
+            yield ListItem( # classes='message', id=f'msg-{self.msgid}'
+                    Horizontal( # classes='horizontal-1', id=f'msg-{self.msgid}-horz1'
+                        Label(id=f'message-{self.msgid}-username', classes='username',renderable=self.username), 
+                        Label(classes='separator1',renderable='@'),
+                        Label(id=f'message-{self.msgid}-time', classes='time',renderable=self.msgtime),
+                    classes='horizontal-1', id=f'msg-{self.msgid}-horz1'),
+                    Horizontal( # classes='horizontal-2', id=f'msg-{self.msgid}-horz2'
+                        Label(classes='separator1',renderable='➟'),
+                        Label(classes='message-content',id=f'message-{self.msgid}-content', renderable=self.msgvalue,shrink=True),
+                    classes='horizontal-2', id=f'msg-{self.msgid}-horz2'),
+                classes='message', id=f'msg-{self.msgid}', disabled=False)
+            # with ListItem(classes='message', id=f'msg-{self.msgid}', disabled=False):
+            #     with Horizontal(classes='horizontal-1'):
+            #         yield Label(
+            #             id=f'message-{self.msgid}-username', 
+            #             classes='username',
+            #             renderable=self.username
+            #             )
+            #         yield Label(
+            #             classes='separator1',
+            #             renderable='@'
+            #             )
+            #         yield Label(
+            #             id=f'message-{self.msgid}-time', 
+            #             classes='time',
+            #             renderable=self.msgtime
+            #             )
+            #     with Horizontal(classes='horizontal-2'):
+            #         yield Label(
+            #             classes='separator1',
+            #             renderable='➟'
+            #         )
+            #         yield Label(
+            #             classes='message-content',
+            #             id=f'message-{self.msgid}-content', 
+            #             renderable=self.msgvalue,
+            #             shrink=True
+            #         )
     class Threadentry() :
         def __init__(self, threadid:str, selected:bool, hovered:bool, username:str, status:str, lastmsg:str, id:str):
             self.id=id
